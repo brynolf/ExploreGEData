@@ -284,7 +284,7 @@ do for [tissue=1:words(Tissues)] {
 		if (parameter == 1) | !(parameter%2) {
 			boxTit 		= '\small $5000 \times \textrm{SNR}_{30}$'
 			boxTit 		= ' '
-			snrTit 		= '\small LPS @ SNR$_{\infty}$'
+			snrTit 		= '\small SNR$_{\infty}$'
 			trueTit		= '\small True'
 		}
 
@@ -339,6 +339,9 @@ do for [tissue=1:words(Tissues)] {
 			
 			set style fill solid border lc rgb fillColor
 			
+			xOffset = 0.33
+			xLength = .66
+			
 			# Plot last model, set legend for boxes
 			if (model == words(Models)){ 
 				set label 1 tit at graph labelPosX,labelPosY center
@@ -349,7 +352,10 @@ do for [tissue=1:words(Tissues)] {
 				if (tissue > 1){ 
 					unset key 
 					unset label 1}
-				plot file using (model+xDelta):(A_lo_quartile):(A_min):(A_max):(A_up_quartile) @candlestickStyle lw lineWidth lc rgb fillColor title boxTit}
+				plot file using (model+xDelta):(A_lo_quartile):(A_min):(A_max):(A_up_quartile) @candlestickStyle lw lineWidth lc rgb fillColor title boxTit,\
+					SNR_inf_File using (model-xOffset):(column(model)):(xLength):(0) @vectorStyle lw 2 dt dashType lc rgb fillColor title snrTit
+			}
+			
 			# Plot second to last model, plot and set legend for SNR_inf
 			if (model == words(Models)-1){
 				unset label 1
@@ -361,9 +367,10 @@ do for [tissue=1:words(Tissues)] {
 				if (tissue > 1){ 
 					unset key }
 				# set key at graph keyPosX,keyPosYSNR reverse samplen 1.6 width 0.2 Right width -3 left
-				plot SNR_inf_File using (0):(column(model)):(7):(0) @vectorStyle lw 2 dt dashType lc rgb fillColor title snrTit,\
+				plot SNR_inf_File using (model-xOffset):(column(model)):(xLength):(0) @vectorStyle lw 2 dt dashType lc rgb fillColor title snrTit,\
 					file using (model+xDelta):(A_lo_quartile):(A_min):(A_max):(A_up_quartile) @candlestickStyle lw lineWidth lc rgb fillColor notitle
 			}
+			
 			# Plot third to last model, plot and set legend for True
 			if (model == words(Models)-2){ 
 				# unset label 1
@@ -378,13 +385,16 @@ do for [tissue=1:words(Tissues)] {
 				if (tissue > 1){ unset key }
 				# plot trueFile using (0):(column(parameter)):(7):(0) @vectorStyle lw 3 lc rgb fillColor t trueTit ,\
 				
-				plot file using (model+xDelta):(A_lo_quartile):(A_min):(A_max):(A_up_quartile) @candlestickStyle lw lineWidth lc rgb fillColor notitle
+				plot file using (model+xDelta):(A_lo_quartile):(A_min):(A_max):(A_up_quartile) @candlestickStyle lw lineWidth lc rgb fillColor notitle,\
+				    SNR_inf_File using (model-xOffset):(column(model)):(xLength):(0) @vectorStyle lw 2 dt dashType lc rgb fillColor title snrTit
 			}
 			if (model < words(Models)-2){
 				unset key
 				unset label 1
 				if (tissue > 1){ unset key }
-				plot file using (model+xDelta):(A_lo_quartile):(A_min):(A_max):(A_up_quartile) @candlestickStyle lw lineWidth lc rgb fillColor notitle}
+				plot file using (model+xDelta):(A_lo_quartile):(A_min):(A_max):(A_up_quartile) @candlestickStyle lw lineWidth lc rgb fillColor notitle,\
+				SNR_inf_File using (model-xOffset):(column(model)):(xLength):(0) @vectorStyle lw 2 dt dashType lc rgb fillColor title snrTit
+			}
 		}
 	}
 }
