@@ -9,9 +9,9 @@ xpsList = {...
     '2018-11-23_450w_new_waveforms_mc_set2_xps.mat', ...
     '2018-11-23_450w_new_waveforms_mc_set3_xps.mat'};
 
-xpsNames = {'Short','Interm.','Long'};
+xpsNames = {'Short','Intermediate','Long'};
 
-%% Loop over all xps
+% Loop over all xps
 for xpsFile = 1:numel(xpsList)
     xpsf = mdm_xps_load(fullfile(inputPath,xpsList{xpsFile}));
     
@@ -70,16 +70,16 @@ for tissue = 1:numel(tissues)
     for param = 1:numel(p_l)
         for xpsFile = 1:numel(xpsList)
         
-            fnames = {sprintf('tissue%s_%s.dat',tissues{tissue},p_l{param}),...
-                sprintf('tissue%s_%s_SNR_inf.dat',tissues{tissue},p_l{param}),...
-                sprintf('tissue%s_true_%s.dat',tissues{tissue}),...
+            fnames = {sprintf('tissue%s_%s_%s.dat',tissues{tissue},p_l{param},xpsNames{xpsFile}),...
+                sprintf('tissue%s_%s_%s_SNR_inf.dat',tissues{tissue},p_l{param},xpsNames{xpsFile}),...
+                sprintf('tissue%s_true_%s.dat',tissues{tissue},xpsNames{xpsFile}),...
                 sprintf('var_vs_samples.dat'),...
                 sprintf('vars.dat')};
             
             for j = 1:numel(fnames)-1
                 fid = fopen(fullfile(outputPath,fnames{j}),'w');
                 %             fid = fopen(sprintf('..\\..\\Figures2\\%s',fnames{j}),'w');
-                fprintf(fid,[repmat('%s, ',1,numel(xpsNames)-1) '%s\r\n'],xpsNames{:});
+                fprintf(fid,[repmat('%s, ',1,numel(protocols)-1) '%s\r\n'],protocols{:});
                 fclose(fid);
             end
             
@@ -108,7 +108,7 @@ for tissue = 1:numel(tissues)
             fid = fopen(fullfile(outputPath,fnames{4}),'a+');
         end
         varPerIter = ((var([dps(:,tissue).MKa]) + var([dps(:,tissue).MKi])).^.5)./sum(ind);
-        fprintf(fid,[repmat('%2.5e, ',1,numel(xpsNames)-1) '%2.5e\r\n'],varPerIter);
+        fprintf(fid,[repmat('%2.5e, ',1,numel(protocols)-1) '%2.5e\r\n'],varPerIter);
         fclose(fid);
     end
 end
