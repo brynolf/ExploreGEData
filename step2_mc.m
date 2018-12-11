@@ -3,7 +3,7 @@
 if (1)
     
 %     ip = '../data/processed/2018-11-15_Premier_results';
-    ip = 'C:\Users\213452\Documents\GitHub\md-dmri\GE\data\processed\2018-11-23_450w_new_waveforms';
+    ip = 'C:\Users\213452\Documents\GitHub\md-dmri\GE\data\processed\TEST';
     op = ip;
     
 %     nii_fn = fullfile(ip, '2018-11-15_Premier_results.nii.gz');

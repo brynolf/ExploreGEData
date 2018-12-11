@@ -42,7 +42,7 @@ switch (c_case)
 %         ip = '../data/raw/2018-11-15_Premier_results';
         ip = 'C:\Users\213452\Documents\GitHub\md-dmri\GE\data\raw\2018-11-23_450w_new_waveforms';
 %         op = '../data/processed/2018-11-15_Premier_results';
-        op = 'C:\Users\213452\Documents\GitHub\md-dmri\GE\data\processed\2018-11-23_450w_new_waveforms';
+        op = 'C:\Users\213452\Documents\GitHub\md-dmri\GE\data\processed\TEST';
         
         % load waveforms
         wfg_fn = {'XRMW_wfg001.mat', 'XRMW_wfg002.mat', 'XRMW_wfg003.mat'};
