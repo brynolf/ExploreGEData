@@ -1,6 +1,11 @@
-function organizeRawData(folder)
+function organizeRawData(zipFolder,zipFileName,folder)
 
-folderContent = dir(folder);
+if ~exist(fullfile(zipFolder,zipFileName))
+    fprintf('Extracting data from zip file...\r\n')
+    unzip(strcat(fullfile(zipFolder,zipFileName),'.zip'),fullfile(zipFolder,zipFileName))
+end
+
+folderContent = dir(fullfile(zipFolder,zipFileName));
 
 %% Create folders
 if ~exist(fullfile(folder,'dcm'))
@@ -21,24 +26,20 @@ end
 matIndex = find(cellfun(@sum,strfind({folderContent.name},'.mat')));
 txtIndex = find(cellfun(@sum,strfind({folderContent.name},'.txt')));
 for file = [matIndex txtIndex]
-    movefile(fullfile(folder,folderContent(file).name), fullfile(folder,'wfg'));
+    copyfile(fullfile(zipFolder,zipFileName,folderContent(file).name), fullfile(folder,'wfg'));
 end
 
 % Copy folders to the dcm folder
 folderIndex = find(cellfun(@sum,{folderContent.isdir}) &~cellfun(@sum,strfind({folderContent.name},'..')) & ~cellfun(@sum,strfind({folderContent.name},'.')));
 for subFolder = folderIndex
-    movefile(fullfile(folder,folderContent(subFolder).name), fullfile(folder,'dcm',folderContent(subFolder).name));
+    copyfile(fullfile(zipFolder,zipFileName,folderContent(subFolder).name), fullfile(folder,'dcm',folderContent(subFolder).name));
 end
 
 %% Convert dcm to nii
 converterPath = 'C:\Users\213452\Downloads\mricrogl_windows\mricrogl';
 converterExec = 'dcm2niix.exe';
-flags = {'-1','-o'};
+flags = {'-1','-o','-f'};
 cmd = fullfile(converterPath,converterExec);
-
-for i = 1:numel(flags)
-    cmd = [cmd ' ' flags{i}];
-end
 
 for subFolder = folderIndex
     if ~exist(fullfile(folder,'nii',folderContent(subFolder).name))
@@ -46,6 +47,13 @@ for subFolder = folderIndex
     end
     inputPath = fullfile(folder,'dcm',folderContent(subFolder).name);
     outputPath= fullfile(folder,'nii',folderContent(subFolder).name);
+    
+    flagValue = {'',addQuotes(outputPath), '%d'};
+    
+    for i = 1:numel(flags)
+        cmd = [cmd ' ' flags{i}, ' ', flagValue{i}];
+    end
+    
     command = [cmd ' "' outputPath '" "' inputPath '"'];
     system(command)
     
