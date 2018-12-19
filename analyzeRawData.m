@@ -3,9 +3,9 @@
 % Analysis steps
 organizeData        = false;
 createXPS           = true;
-motionCorrection    = true;
-parameterEstimation = true;
-generateImages      = true;
+motionCorrection    = false;
+parameterEstimation = false;
+generateImages      = false;
 
 % Experiment name (and also zip file name if applicable, which is the same)
 folderName = '2018-12-06_mr450w_index_fix';
@@ -54,50 +54,47 @@ if createXPS
     for c_wfg = 1:numel(wfg_fn)
         load(fullfile(ip, 'wfg', wfg_fn{c_wfg}));
         
-        % construct xps
-        xps = {};
-        
         % Control name of waveform variable
         if exist('new_waveforms')
             waveforms = new_waveforms;
         end
         
+        % Convert MATLAB table to array
         if isa(encoding_table,'table')
             enc_table = table2array(encoding_table);
         else
             enc_table = encoding_table;
         end
-%         b0Lines = sum(find(enc_table(:,4) == 0));
-
+        %         b0Lines = sum(find(enc_table(:,4) == 0));
+        
         if addExtraImage
             variableRange = 0:size(encoding_table, 1);
         else
             variableRange = 1:size(encoding_table, 1);
         end
         
-        for c = variableRange
-            gwf = waveforms(:,:,max(1,c)) * 1e-3;
-            
-            if addExtraImage
-                if (c == 0), gwf = zeros(size(gwf)); end
-            end
-            
-            T_tot = 75.8e-3;
-            
-            dt = T_tot / size(gwf,1);
-            t = linspace(0,T_tot, size(gwf,1));
-            
-            
-            rf = ones(size(gwf,1), 1);
-            
-            % flip sign to get correct Maxwell index
-            ind = t > 40e-3;
-            rf(ind) = -1;
-            gwf(ind,:) = -gwf(ind,:);
-            
-            xps{c} = gwf_to_pars(gwf, rf, dt);
+        if addExtraImage
+            if (c == 0), gwf = zeros(size(gwf)); end
         end
         
+        % timing variables
+        dt = 4e-6; % gradient raster time
+        T_tot = dt * size(gwf,1);
+        t = linspace(0, T_tot - dt, size(gwf,1));
+        
+        % flip sign after 180 pulse to get correct Maxwell index
+        rf = gwf_to_rf(mean(abs(gwf),3));
+        gwf(rf < 0,:,:) = -gwf(rf < 0,:,:);
+        
+        % construct xps from gwf
+        xps = cell(1, size(gwf, 3));
+        
+        for c = 1:size(gwf, 3)
+            xps{c} = gwf_to_pars(gwf(:,:,c), rf, dt);
+        end
+        
+        % merge it and remove s_ind so that subsequent analysis does not
+        % assume the xps to be from different series
         xps = mdm_xps_merge(xps);
         xps = msf_rmfield(xps, 's_ind');
         %             xps.b_delta(xps.b_delta < 0.01) = 0;
