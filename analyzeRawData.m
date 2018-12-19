@@ -1,7 +1,7 @@
 %% Change parameters here %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Analysis steps
-organizeData        = true;
+organizeData        = false;
 createXPS           = true;
 motionCorrection    = true;
 parameterEstimation = true;
@@ -20,7 +20,7 @@ ip = fullfile(baseInPath,folderName);
 % Processed path
 baseOutPath = 'C:\Users\213452\Documents\GitHub\md-dmri\GE\data\processed\';
 op = fullfile(baseOutPath,folderName);
-op = fullfile(baseOutPath,'TEST4')
+% op = fullfile(baseOutPath,'TEST4')
 
 % Add extra image. Do this form images prior to 2018-12-06
 addExtraImage = false;
