@@ -1,17 +1,23 @@
+clear
 %% Change parameters here %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Analysis steps
 organizeData        = false;
-createXPS           = true;
-motionCorrection    = false;
-parameterEstimation = false;
-generateImages      = false;
+createXPS           = false;
+loadXPS             = true;
+motionCorrection    = true;
+parameterEstimation = true;
+generateImages      = true;
 
 % Experiment name (and also zip file name if applicable, which is the same)
-folderName = '2018-12-06_mr450w_index_fix';
+folderName = '2018-11-22_Premier_corrected_waveforms';
 
 % Data zip file path
 zipPath = 'C:\Users\213452\Documents\GitHub\GEData';
+
+% XPS path
+xpsPath = 'C:\Users\213452\Documents\GitHub\GEData\2018-12-11_waveform_infos';
+xpsName = 'HRMW';
 
 % Raw data path
 baseInPath = 'C:\Users\213452\Documents\GitHub\md-dmri\GE\data\raw';
@@ -47,8 +53,8 @@ nii_fn      = {...
     niiFiles(find(cellfun(@sum,strfind({niiFiles.name},'interm')))).name,...
     niiFiles(find(cellfun(@sum,strfind({niiFiles.name},'long')))).name}; %#ok<*FNDSB>
 
-% STEP 2: CREATE THE XPS
-if createXPS
+% STEP 2a: CREATE THE XPS
+if createXPS && ~loadXPS
     
     clear s;
     for c_wfg = 1:numel(wfg_fn)
@@ -58,7 +64,7 @@ if createXPS
         if exist('new_waveforms')
             waveforms = new_waveforms;
         end
-        
+        waveforms = waveforms.*1e-3;
         % Convert MATLAB table to array
         if isa(encoding_table,'table')
             enc_table = table2array(encoding_table);
@@ -79,18 +85,18 @@ if createXPS
         
         % timing variables
         dt = 4e-6; % gradient raster time
-        T_tot = dt * size(gwf,1);
-        t = linspace(0, T_tot - dt, size(gwf,1));
+        T_tot = dt * size(waveforms,1);
+        t = linspace(0, T_tot - dt, size(waveforms,1));
         
         % flip sign after 180 pulse to get correct Maxwell index
-        rf = gwf_to_rf(mean(abs(gwf),3));
-        gwf(rf < 0,:,:) = -gwf(rf < 0,:,:);
+        rf = gwf_to_rf(mean(abs(waveforms),3));
+        waveforms(rf < 0,:,:) = -waveforms(rf < 0,:,:);
         
         % construct xps from gwf
-        xps = cell(1, size(gwf, 3));
+        xps = cell(1, size(waveforms, 3));
         
-        for c = 1:size(gwf, 3)
-            xps{c} = gwf_to_pars(gwf(:,:,c), rf, dt);
+        for c = 1:size(waveforms, 3)
+            xps{c} = gwf_to_pars(waveforms(:,:,c), rf, dt);
         end
         
         % merge it and remove s_ind so that subsequent analysis does not
@@ -110,12 +116,35 @@ if createXPS
     s = mdm_s_merge(s, op, folderName);
 end
 
+% STEP 2b: LOAD THE XPS
+if loadXPS
+    xpsFiles = dir(fullfile(xpsPath,[xpsName '*.mat']));
+    s = {};
+    for c_wfg = 1:numel(xpsFiles)
+        
+        % Load xps
+        tmp = load(fullfile(xpsPath,xpsFiles(c_wfg).name));
+        
+        % construct link to data
+        s{c_wfg}.nii_fn = fullfile(ip, 'nii', nii_fn{c_wfg});
+        s{c_wfg}.xps = tmp.xps;
+        
+        % save data separately too
+        mdm_s_merge(s(c_wfg), op, sprintf('%s_%i',folderName, c_wfg));
+        
+    end
+    s = mdm_s_merge(s, op, folderName);
+end
+
 % STEP 3: APPLY MOTION CORRECTION
 if motionCorrection
     clear s;
     for i = 1:numel(nii_fn)
         
         opt = mdm_opt();
+        opt = mio_opt(opt);
+        opt.mio.ref_extrapolate = [];
+        opt.mio.ref_extrapolate.do_subspace_fit = true;
         p_fn = elastix_p_write(elastix_p_affine(70), fullfile(op, 'p.txt'));
         
         s = mdm_s_from_nii(fullfile(op,sprintf('%s_%i.nii.gz',folderName, i)));
